@@ -13,19 +13,11 @@ from mds_db import *
 
 # Create an object of type mds_db
 db = mds_db("dfs.db") 
-
-# Connect to the database
-print "Connecting to database" 
-db.Connect() 
-
-# Testing how to add a new node to the metadata server.
-# Note that I used a node name, the address and the port.
-# Address and port are necessary for connection.
-
-print "Choteando one of the steps of the assignment :) ..."
-print "Files in the database"
-for file, size in db.GetFiles():
-	print file, size
-print
-
+db.Connect()
+db.InsertFile('/hola/boo.txt', 20)
+db.InsertFile('/opt/boo.txt', 30)
+print(db.InsertFileName("Skibiddi"))
+blockList = [('localhost', 4787, '296ba166-9222-11ee-904e-acde48001122'), ('localhost', 4939, '296bc682-9222-11ee-8ede-acde48001122')]
+print(blockList)
+print(db.AddBlockToInode('/hola/boo.txt', blockList))
 db.Close() 

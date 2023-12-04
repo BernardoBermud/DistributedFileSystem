@@ -66,20 +66,22 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		   saves it with an unique ID.  The ID is sent back to the
 		   copy client.
 		"""
-
-		fname, fsize = p.getFileInfo()
-
-		self.request.send("OK")
+		print("Putin")
+		print(p.getFileChunk())
 
 		# Generates an unique block id.
 		blockid = str(uuid.uuid1())
 
-
 		# Open the file for the new data block.  
+  
+  
 		# Receive the data block.
+		print(p.getFileChunk())
+  
 		# Send the block id back
-
-		# Fill code
+		sendBlockID = Packet()
+		sendBlockID.BuildGetDataBlockPacket(blockid)
+		self.request.sendall(sendBlockID.getEncodedPacket().encode())
 
 	def handle_get(self, p):
 		
@@ -94,9 +96,6 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 
 	def handle(self):
 		msg = self.request.recv(1024).decode()
-		#print msg, type(msg)
-		print(msg)
-			
 		p = Packet()
 		p.DecodePacket(msg)
 

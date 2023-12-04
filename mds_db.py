@@ -86,7 +86,29 @@ class mds_db:
 			return 1
 		except:
 			return 0
-	
+
+	def InsertFileName(self, fname):
+		"""Create the inode attributes. For this project, the name of the
+		   file and its size.
+		"""
+		query = """insert into inode (fname) values (?)"""
+		try:
+			self.c.execute(query, (fname,))
+			return 1
+		except:
+			return 0
+
+	def InsertFileID(self, id, fname, fsize):
+		"""Create the inode attributes. For this project, the name of the
+		   file and its size.
+		"""
+		query = """insert into inode (fid, fname, fsize) values (?, ?, ?)"""
+		try:
+			self.c.execute(query, (id, fname, fsize))
+			return 1
+		except:
+			return 0
+ 
 	def GetFileInfo(self, fname):
 		"""Given a filename, if the file is stored in DFS,
 		   return its filename id and fsize. Internal use only.
@@ -105,8 +127,8 @@ class mds_db:
 		   File Name and Size.
 		"""
 
-		query = """select fname, fsize from inode where 1"""
-		self.c.execute(query)	
+		query = """select fid, fname, fsize from inode where 1"""
+		self.c.execute(query)
 		return self.c.fetchall()
 
 	def AddBlockToInode(self, fname, blocks):
@@ -115,14 +137,19 @@ class mds_db:
 		   updated to point to the data blocks. So this function receives
 		   the filename and a list of tuples with (node id, chunk id)
 		"""
-		fid, dummy1 = self.GetFileInfo(fname) 
+		print("Adding Inode Info")
+		print(fname)
+		fid, dummy1 = self.GetFileInfo(fname)
+		print(self.GetFileInfo(fname))
 		if not fid:
+			print(fid)
 			return None
 		for address, port, chunkid in blocks:
 			nid = self.CheckNode(address, port)
+			print("Node: ", nid[0])
 			if nid:
 				query = """insert into block (nid, fid, cid) values (?, ?, ?)"""
-				self.c.execute(query, (nid, fid, chunkid))
+				self.c.execute(query, (nid[0], fid, chunkid))
 			else:
 				return 0 
 		return 1

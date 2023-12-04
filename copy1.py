@@ -42,7 +42,7 @@ def copyToDFS(address, fname, path):
 		# Create a Put packet with the fname and the length of the data,
 		# and sends it to the metadata server 
 		fileInfo = Packet()
-		fileInfo.BuildPutPacket(path, size)
+		fileInfo.BuildPutPacket(fname, size)
 		sockMeta.sendall(fileInfo.getEncodedPacket().encode())
 		print("File Sent")
 		response = sockMeta.recv(1024).decode()
@@ -56,8 +56,10 @@ def copyToDFS(address, fname, path):
 			nodeList.DecodePacket(response)
 			print(nodeList.getDataNodes())
 
+			blockList = [] #Will store the block information of each chunk of the file
 			#Sending part of file to each data-node and recieving a unique id where the piece of the file is stored.
 			for address, port in nodeList.getDataNodes():
+				#Connecting to current data-node
 				sockNode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				if address == 'localhost':
 					sockNode.connect((address, port))
@@ -66,14 +68,27 @@ def copyToDFS(address, fname, path):
 					sockNode.connect((int(address), int(port)))
 					print("Connecting to Data-Node %s" % (port))
      
-				testMessage = "It's a me, Mario!"
-				sockNode.sendall(testMessage.encode())
-    
-				message = sockNode.recv(1024).decode()
-				print(message)
+				#Sending file memory chunk packet to data-node
+				fileChunk = Packet()
+				fileChunk.BuildPutFileChunk("It's a me, Mario!")
+				sockNode.sendall(fileChunk.getEncodedPacket().encode())
+
+				#Recieving uuid where data-node stored the file memory chunk
+				response = sockNode.recv(1024).decode()
+				chunkID = Packet()
+				chunkID.DecodePacket(response)
+				
+				#Storing block info
+				blockList.append((address, port, chunkID.getBlockID()))
+
+				#End of connection between data-node and client
 				sockNode.close()
-			# Divide the file in blocks
-			# Send the blocks to the data servers
+    
+			#Create the inode utilizing the block list and fine name and send it to the meta-data server
+			inode = Packet()
+			inode.BuildDataBlockPacket(fname, blockList)
+			print(inode.getFileName(), inode.getDataBlocks())
+			sockMeta.sendall(inode.getEncodedPacket().encode())
 	else:
 		print("File not Found")	
 

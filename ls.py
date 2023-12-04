@@ -39,8 +39,9 @@ def client(ip, port):
 		result.DecodePacket(msg)
 		fileList = result.getFileArray()
 		#Print out the list in the packet
-		for file, size in fileList:
-			print(file, size, "bytes")
+		for file in fileList:
+			print(file)
+			#print(file, size, "bytes")
 	else:
 		print("Error: Could not access file list")
 	#End connection

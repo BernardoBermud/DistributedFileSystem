@@ -46,11 +46,12 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			print("Sending List to Client")
 			fileList = []
 			#Run through files found in the database and store the info in a list of touples
-			for file, size in db.GetFiles():
-				fileInfo = (file, size)
+			for fid, file, size in db.GetFiles():
+				fileInfo = (fid, file, size)
 				fileList.append(fileInfo)
 				print(file, size)
 			#create a packet to send file info to ls.py
+			print("sent")
 			ls = Packet()
 			ls.BuildListResponse(fileList)
 			self.request.sendall(ls.getEncodedPacket().encode())
@@ -59,24 +60,28 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 
 	def handle_put(self, db, p):
 		#Insert new file into the database and send data nodes to save the file.
-		# Fill code 
-		nodeList = Packet()
-		nodeList.BuildPutResponse(db.GetDataNodes())
-		self.request.sendall(nodeList.getEncodedPacket().encode())
-  
-		"""""
+
 		fileInfo = p.getFileInfo()
+		print(fileInfo[0], fileInfo[1])
 		if db.InsertFile(fileInfo[0], fileInfo[1]):
 			# Fill code
 			print("File inserted: %s %s" % (fileInfo[0], fileInfo[1]))
 			#Send list of datanodes to copy client
 			nodeList = Packet()
-			nodeList.BuildListResponse(db.GetDataNodes())
+			nodeList.BuildPutResponse(db.GetDataNodes())
 			self.request.sendall(nodeList.getEncodedPacket().encode())
+			
+			result = self.request.recv(1024).decode()
+			inode = Packet()
+			inode.DecodePacket(result)
+			print(inode.getFileName(), inode.getDataBlocksAfterRecv())
+			db.AddBlockToInode(inode.getFileName(), inode.getDataBlocks())
+			inodeInfo = db.GetFileInode(inode.getFileName())
+			print(inodeInfo)
 		else:
 			print("File already exists")
 			self.request.sendall("DUP".encode())
-		"""
+
 	def handle_get(self, db, p):
 		#Check if file is in database and return list of server nodes that contain the file.
 

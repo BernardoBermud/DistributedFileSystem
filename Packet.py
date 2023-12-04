@@ -132,7 +132,7 @@ class Packet:
    
    #Funciones Custom
 
-	def BuildFileChunk(self, chunk):
+	def BuildPutFileChunk(self, chunk):
 		"""Builds a chunk of memory of a file"""
 		self.BuildCommand("put")
 		self.packet["chunk"] = chunk
@@ -141,7 +141,10 @@ class Packet:
 		"""Returns chunk of memory of a file"""
 		return self.packet.get("chunk")
 
-
+	def getDataBlocksAfterRecv(self):
+		"""Returns a list of data blocks""" 
+		blockList = [tuple(sublist) for sublist in self.packet.get("blocks")]
+		return blockList
 
 		
 	

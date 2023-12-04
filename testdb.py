@@ -44,8 +44,8 @@ print()
 
 print("Choteando one of the steps of the assignment :) ...")
 print("Files in the database")
-for file, size in db.GetFiles():
-    print(file, size)
+for fid, file, size in db.GetFiles():
+    print(fid, file, size)
 print()
 
 print("Adding blocks to the file, duplicate message if not the first time running")
