@@ -75,7 +75,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		# Open the file for the new data block.  
   
   
-		# Receive the data block.
+		# Receive the data block
 		print(p.getFileChunk())
   
 		# Send the block id back
@@ -87,8 +87,12 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		
 		# Get the block id from the packet
 		blockid = p.getBlockID()
+		print(blockid)
 
-
+		p.BuildPutFileChunk("Hello It's a me, Mario")
+		self.request.sendall(p.getEncodedPacket().encode())
+  
+		
 		# Read the file with the block id data
 		# Send it back to the copy client.
 		

@@ -70,14 +70,16 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			nodeList = Packet()
 			nodeList.BuildPutResponse(db.GetDataNodes())
 			self.request.sendall(nodeList.getEncodedPacket().encode())
-			
+			print("sending Nodes")
+			'''''
 			result = self.request.recv(1024).decode()
 			inode = Packet()
 			inode.DecodePacket(result)
-			print(inode.getFileName(), inode.getDataBlocksAfterRecv())
-			db.AddBlockToInode(inode.getFileName(), inode.getDataBlocks())
+			#print(inode.getFileName(), inode.getDataBlocksAfterRecv())
+			db.AddBlockToInode(inode.getFileName(), inode.getDataBlocksAfterRecv())
 			inodeInfo = db.GetFileInode(inode.getFileName())
 			print(inodeInfo)
+			'''
 		else:
 			print("File already exists")
 			self.request.sendall("DUP".encode())
@@ -87,11 +89,15 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 
 		# Fill code to get the file name from packet and then 
 		# get the fsize and array of metadata server
-
-		if fsize:
-			# Fill code
-
-			self.request.sendall(p.getEncodedPacket())
+		
+		print("Recieved: ", p.getFileName())
+		if db.GetFileInfo(p.getFileName())[0] != None:
+			#Return inode to copy client
+			inodeInfo = db.GetFileInode(p.getFileName())
+			print("inode Info: ", inodeInfo[1], inodeInfo[0])
+			#inode = Packet()
+			p.BuildGetResponse(inodeInfo[1], inodeInfo[0])
+			self.request.sendall(p.getEncodedPacket().encode())
 		else:
 			self.request.sendall("NFOUND".encode())
 
@@ -100,7 +106,11 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 		print("Handling")
 		# Fill code to get file name and blocks from
 		# packet
-	
+		print(p.getFileName(), p.getDataBlocksAfterRecv())
+		db.AddBlockToInode(p.getFileName(), p.getDataBlocksAfterRecv())
+		inodeInfo = db.GetFileInode(p.getFileName())
+
+		print(inodeInfo)
 		# Fill code to add blocks to file inode
 
 	
@@ -112,7 +122,6 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 
 		# Define a packet object to decode packet messages
 		p = Packet()
-
 		# Receive a msg from the list, data-node, or copy clients
 		msg = self.request.recv(1024).decode()
 		
@@ -121,7 +130,7 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 
 		# Extract the command part of the received packet
 		cmd = p.getCommand()
-
+		print("Lol: ",cmd)
 		# Invoke the proper action 
 		if   cmd == "reg":
 			# Registration client
@@ -143,12 +152,12 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 		elif cmd == "get":
 			# Client asking for servers to get data
 			print("Asking to Read Data Blocks")
-			# Fill code
+			self.handle_get(db, p)
 
 		elif cmd == "dblks":
 			# Client sending data blocks for file
 			print("sending Data Blocks")
-			 # Fill code
+			self.handle_blocks(db, p)
 
 
 		db.Close()

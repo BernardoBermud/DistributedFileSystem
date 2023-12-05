@@ -107,7 +107,7 @@ class Packet:
 
 	def BuildGetResponse(self, metalist, fsize):
 		"""Builds a list of data node servers with the blocks of a file, and file size."""
-		self.packet["servers"] = metalist
+		self.packet["blocks"] = metalist
 		self.packet["fsize"] = fsize
 
 	#USADO: mata-data crea una lista de los data-nodes para enviarsela al copy
@@ -141,6 +141,7 @@ class Packet:
 		"""Returns chunk of memory of a file"""
 		return self.packet.get("chunk")
 
+	#La razon de pq esto existe es cuando se envía se covierte en una lista de listas en vez de una lista de touples.
 	def getDataBlocksAfterRecv(self):
 		"""Returns a list of data blocks""" 
 		blockList = [tuple(sublist) for sublist in self.packet.get("blocks")]

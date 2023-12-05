@@ -26,13 +26,14 @@ def copyToDFS(address, fname, path):
 	"""
 
 	# Create a connection to the data server
-	
+	metaIp = address[0]
+	metaPort = address[1]
 	sockMeta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	if address[0] == 'localhost':
-		sockMeta.connect((address[0], address[1]))
+	if metaIp == 'localhost':
+		sockMeta.connect((metaIp, metaPort))
 		print("Connecting to server")
 	else:
-		sockMeta.connect((int(address[0]), int(address[1])))
+		sockMeta.connect((int(metaIp), int(metaPort)))
 		print("Connecting to server1")
 	
 	# Read file
@@ -84,6 +85,15 @@ def copyToDFS(address, fname, path):
 				#End of connection between data-node and client
 				sockNode.close()
     
+			sockMeta.close()
+			sockMeta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			sockMeta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			if metaIp == 'localhost':
+				sockMeta.connect((metaIp, metaPort))
+				print("Connecting to server")
+			else:
+				sockMeta.connect((int(metaIp), int(metaPort)))
+				print("Connecting to server1")
 			#Create the inode utilizing the block list and fine name and send it to the meta-data server
 			inode = Packet()
 			inode.BuildDataBlockPacket(fname, blockList)
@@ -111,12 +121,58 @@ def copyFromDFS(address, fname, path):
 	    the file fname.  Get the data blocks from the data nodes.
 	    Saves the data in path.
 	"""
-
+	print("Metadata Address: ", address[0])
+	print("Metadata Port: ", address[1])
+	print("Where File is in dfs", fname)
+	print("Name of file output: ", path)
+ 
    	# Contact the metadata server to ask for information of fname
+	sockMeta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	if address[0] == 'localhost':
+		sockMeta.connect((address[0], address[1]))
+		print("Connecting to server")
+	else:
+		sockMeta.connect((int(address[0]), int(address[1])))
+		print("Connecting to server1")
+	
+ 	#Sending request to recieve inode information
+	inode = Packet()
+	inode.BuildGetPacket(fname)
+	sockMeta.sendall(inode.getEncodedPacket().encode())
+ 
+	#Recieving Inode Information
+	result = sockMeta.recv(1024).decode()
+	if(result == "NFOUND"):
+		print("File not found in file system")
+	else:
+		# If there is no error response Retreive the data blocks
+		print(result)
+		inode.DecodePacket(result)
+		blockList = inode.getDataBlocksAfterRecv() #Data Blocks
+		fSize = inode.getFileInfo()[1]#File Size
 
-	# Fill code
+		#Calling each of the data nodes to retrieve the chunks of memory 
+		for nodeIp, nodePort, blockId in blockList:
+			sockNode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			if nodeIp == 'localhost':
+				sockNode.connect((nodeIp, nodePort))
+				print("Connecting to Data-Node %s" % (nodePort))
+			else:
+				sockNode.connect((int(nodeIp), int(nodePort)))
+				print("Connecting to Data-Node %s" % (nodePort))
+    
+			block = Packet()
+			block.BuildGetDataBlockPacket(blockId)
+			sockNode.sendall(block.getEncodedPacket().encode())
+   
+			result = sockNode.recv(1024).decode()
+			block.DecodePacket(result)
+			print(block.getFileChunk())
+   
+			sockNode.close()
 
-	# If there is no error response Retreive the data blocks
+
+			
 
 	# Fill code
 
