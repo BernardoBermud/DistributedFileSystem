@@ -77,11 +77,12 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		elif(DATA_PATH[len(DATA_PATH)-1] != '/' ):
 			DATA_PATH += '/'
 
+		chunkSize = p.getFileChunk()
 		# Lets copy client know that metadata is ready to recieve memory chunk
 		self.request.sendall("OK".encode())
   
 		# Recieves chunk from copy utilizing the chunk size
-
+		print("Chunk size recieved: %s" % (chunkSize))
 		#chunk = self.request.recv(p.getFileChunk())
 		
 		# Generates an unique block id to know were chunk will be stored
@@ -90,13 +91,14 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		# Generates file were memory chunk will be stored
 		with open(DATA_PATH + blockid, 'wb') as destinationFile:
 			count = 0
-			while(count < p.getFileChunk()):
-				chunk = self.request.recv(4096)
+			while(count < chunkSize):
+				chunk = self.request.recv(min(4096, chunkSize - count))
 				if not chunk:
 					break
 				destinationFile.write(chunk)
 				count += len(chunk)
-		
+
+			print("Chunks Given: ", count)
 		# Sending block id to copy client to store
 		sendBlockID = Packet()
 		sendBlockID.BuildGetDataBlockPacket(blockid)
