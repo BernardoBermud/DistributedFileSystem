@@ -1,7 +1,7 @@
 ###############################################################################
 #
 # Filename: data-node.py
-# Author: Jose R. Ortiz and ... (hopefully some students contribution)
+# Author: Jose R. Ortiz and Bernardo A. Bermúdez
 #
 # Description:
 # 	data node server for the DFS

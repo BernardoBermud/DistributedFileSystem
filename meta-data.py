@@ -1,7 +1,7 @@
 ###############################################################################
 #
 # Filename: meta-data.py
-# Author: Jose R. Ortiz and ... (hopefully some students contribution)
+# Author: Jose R. Ortiz and Bernardo A. Bermúdez
 #
 # Description:
 # 	MySQL support library for the DFS project. Database info for the 

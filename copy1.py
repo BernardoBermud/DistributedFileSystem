@@ -1,7 +1,7 @@
 ###############################################################################
 #
-# Filename: mds_db.py
-# Author: Jose R. Ortiz and ... (hopefully some students contribution)
+# Filename: copy.py
+# Author: Jose R. Ortiz and Bernardo A. Bermúdez
 #
 # Description:
 # 	Copy client for the DFS

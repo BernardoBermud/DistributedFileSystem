@@ -1,7 +1,7 @@
 ###############################################################################
 #
 # Filename: test.py
-# Author: Jose R. Ortiz and ... (hopefully some students contribution)
+# Author: Jose R. Ortiz and and Bernardo A. Bermúdez
 #
 # Description:
 #       Script to test the MySQL support library for the DFS project.
@@ -23,12 +23,12 @@ db.Connect()
 # Address and port are necessary for connection.
 
 print("Testing node addition")
-#id1 = db.AddDataNode("136.145.54.10", 80)
-#id2 = db.AddDataNode("136.145.54.11", 80)
-#print(id1)
+id1 = db.AddDataNode("136.145.54.10", 80)
+id2 = db.AddDataNode("136.145.54.11", 80)
+print(id1)
 print("Testing if node was inserted")
 print("A tuple with node name and connection info must appear")
-#print(db.CheckNode(id1, 80))
+print(db.CheckNode(id1, 80))
 print()
 
 print("Testing all Available data nodes")
@@ -44,8 +44,8 @@ print()
 
 print("Choteando one of the steps of the assignment :) ...")
 print("Files in the database")
-for fid, file, size in db.GetFiles():
-    print(fid, file, size)
+for file, size in db.GetFiles():
+    print(file, size)
 print()
 
 print("Adding blocks to the file, duplicate message if not the first time running")
