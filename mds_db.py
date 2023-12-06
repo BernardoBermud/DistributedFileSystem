@@ -127,7 +127,7 @@ class mds_db:
 		   File Name and Size.
 		"""
 
-		query = """select fid, fname, fsize from inode where 1"""
+		query = """select fname, fsize from inode where 1"""
 		self.c.execute(query)
 		return self.c.fetchall()
 
@@ -137,16 +137,11 @@ class mds_db:
 		   updated to point to the data blocks. So this function receives
 		   the filename and a list of tuples with (node id, chunk id)
 		"""
-		print("Adding Inode Info")
-		print(fname)
 		fid, dummy1 = self.GetFileInfo(fname)
-		print(self.GetFileInfo(fname))
 		if not fid:
-			print(fid)
 			return None
 		for address, port, chunkid in blocks:
 			nid = self.CheckNode(address, port)
-			print("Node: ", nid[0])
 			if nid:
 				query = """insert into block (nid, fid, cid) values (?, ?, ?)"""
 				self.c.execute(query, (nid[0], fid, chunkid))

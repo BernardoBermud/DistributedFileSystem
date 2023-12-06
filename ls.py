@@ -7,8 +7,6 @@
 # 	List client for the DFS
 #
 
-
-
 import socket
 import sys
 from Packet import *
@@ -18,33 +16,38 @@ def usage():
 	sys.exit(0)
 
 def client(ip, port):
-	# Contacts the metadata server and ask for list of files.
-	print("Cooking %s %s" % (ip, port))
-	# Connect to the server
+	"""Contacts the metadata server and ask for list of files"""
+ 
+	#Connecting to metadata
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	if ip == 'localhost':
 		sock.connect((ip, port))
-		print("Connecting to server")
 	else:
 		sock.connect((int(ip), int(port)))
-		print("Connecting to server1")
-	#Send request to list files in meta-data.py
+
+	#Send request to recieve file list from meta-data server
 	sp = Packet()
 	sp.BuildListPacket()
 	sock.sendall(sp.getEncodedPacket().encode())
-	#Recieve the list of file names with their sizesfrom meta-data.py
+
+	#Recieve the list of file names and attributes from meta-data server
 	result = Packet()
 	msg = sock.recv(1024).decode()
+
+	#Checking if list was sent 
 	if(msg != "NAK"):
+	
+		#Reveal list of files
 		result.DecodePacket(msg)
 		fileList = result.getFileArray()
-		#Print out the list in the packet
-		for file in fileList:
-			print(file)
-			#print(file, size, "bytes")
+
+		#Display files from list
+		for file, size in fileList:
+			print(file, size, "bytes")
 	else:
 		print("Error: Could not access file list")
-	#End connection
+
+	#End of ls process
 	sock.close()
 
 
@@ -52,6 +55,7 @@ if __name__ == "__main__":
 
 	server = sys.argv[1].split(":")
 	
+	#Validation of arguments
 	if len(sys.argv) < 2:
 		usage()
 
@@ -71,4 +75,5 @@ if __name__ == "__main__":
 	if not ip:
 		usage()
 
+	#Begin ls process
 	client(ip, port)

@@ -31,7 +31,7 @@ def copy_file_in_chunks(source_path, destination_path):
             print(f"Error: {e}")
 
 # Example usage with a specified chunk size (in bytes)
-source_file_path = 'servidorIUPI.png'
-destination_file_path = 'popo.png'
+source_file_path = 'BadApple.mp4'
+destination_file_path = 'popo.mp4'
 
 copy_file_in_chunks(source_file_path, destination_file_path)

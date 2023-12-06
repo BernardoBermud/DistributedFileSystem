@@ -131,15 +131,15 @@ class Packet:
 			self.packet = {"command": cmd}
    
    #Funciones Custom
-
-	def BuildPutFileChunk(self, chunk):
-		"""Builds a chunk of memory of a file"""
+	
+	def BuildPutFileChunk(self, chunkSize):
+		"""Builds the size of the chunk the data-node will recieve"""
 		self.BuildCommand("put")
-		self.packet["chunk"] = chunk
+		self.packet["chunkSize"] = chunkSize
   
 	def getFileChunk(self):
 		"""Returns chunk of memory of a file"""
-		return self.packet.get("chunk")
+		return self.packet.get("chunkSize")
 
 	#La razon de pq esto existe es cuando se envía se covierte en una lista de listas en vez de una lista de touples.
 	def getDataBlocksAfterRecv(self):

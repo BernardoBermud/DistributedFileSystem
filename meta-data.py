@@ -22,36 +22,32 @@ def usage():
 
 class MetadataTCPHandler(socketserver.BaseRequestHandler):
 	def handle_reg(self, db, p):
-	#def handle_reg(self, p):
 		"""Register a new client to the DFS  ACK if successfully REGISTERED
 			NAK if problem, DUP if the IP and port already registered
 		"""
 		try:
+			#Checking if data-node exists in database
 			if(db.CheckNode(p.getAddr(), p.getPort()) == None):
+       
+				#Registering data-node to database
 				db.AddDataNode(p.getAddr(), p.getPort())
 				self.request.sendall("ACK".encode())
-				print("New node inserted")
 			else:
 				self.request.sendall("DUP".encode())
-				print("Node already exists in server")
 		except:
 			self.request.sendall("NAK".encode())
-		nodes = db.GetDataNodes()
-		print("Current Nodes in database:")
-		print(nodes)
 
 	def handle_list(self, db):
-		#Get the file list from the database and send list to client
+		"""Gets the file list from the database and send list to ls client"""
 		try:
-			print("Sending List to Client")
-			fileList = []
-			#Run through files found in the database and store the info in a list of touples
-			for fid, file, size in db.GetFiles():
-				fileInfo = (fid, file, size)
+			fileList = [] # Stores File info in tuples
+
+			# Run through files found in the database and store the info in the list
+			for file, size in db.GetFiles():
+				fileInfo = (file, size)
 				fileList.append(fileInfo)
-				print(file, size)
-			#create a packet to send file info to ls.py
-			print("sent")
+
+			# Sending file list to ls client
 			ls = Packet()
 			ls.BuildListResponse(fileList)
 			self.request.sendall(ls.getEncodedPacket().encode())
@@ -59,59 +55,38 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			self.request.sendall("NAK".encode())	
 
 	def handle_put(self, db, p):
-		#Insert new file into the database and send data nodes to save the file.
-
+		"""Inserts file into data base and returns list of data-nodes to copy client"""
+  
+		# Retrieving file info from packet
 		fileInfo = p.getFileInfo()
-		print(fileInfo[0], fileInfo[1])
+  
+		# Inserting new file into database or tells client that file name is already in use
 		if db.InsertFile(fileInfo[0], fileInfo[1]):
-			# Fill code
-			print("File inserted: %s %s" % (fileInfo[0], fileInfo[1]))
-			#Send list of datanodes to copy client
+   
+			#Sending list of data-nodes to copy client
 			nodeList = Packet()
 			nodeList.BuildPutResponse(db.GetDataNodes())
 			self.request.sendall(nodeList.getEncodedPacket().encode())
-			print("sending Nodes")
-			'''''
-			result = self.request.recv(1024).decode()
-			inode = Packet()
-			inode.DecodePacket(result)
-			#print(inode.getFileName(), inode.getDataBlocksAfterRecv())
-			db.AddBlockToInode(inode.getFileName(), inode.getDataBlocksAfterRecv())
-			inodeInfo = db.GetFileInode(inode.getFileName())
-			print(inodeInfo)
-			'''
 		else:
-			print("File already exists")
 			self.request.sendall("DUP".encode())
 
 	def handle_get(self, db, p):
-		#Check if file is in database and return list of server nodes that contain the file.
-
-		# Fill code to get the file name from packet and then 
-		# get the fsize and array of metadata server
+		"""Checks if file is in database and returns inode information"""
 		
-		print("Recieved: ", p.getFileName())
+		#Cheking if file exists
 		if db.GetFileInfo(p.getFileName())[0] != None:
+      
 			#Return inode to copy client
 			inodeInfo = db.GetFileInode(p.getFileName())
-			print("inode Info: ", inodeInfo[1], inodeInfo[0])
-			#inode = Packet()
 			p.BuildGetResponse(inodeInfo[1], inodeInfo[0])
 			self.request.sendall(p.getEncodedPacket().encode())
 		else:
 			self.request.sendall("NFOUND".encode())
 
 	def handle_blocks(self, db, p):
-		#Add the data blocks to the file inode
-		print("Handling")
-		# Fill code to get file name and blocks from
-		# packet
-		print(p.getFileName(), p.getDataBlocksAfterRecv())
-		db.AddBlockToInode(p.getFileName(), p.getDataBlocksAfterRecv())
-		inodeInfo = db.GetFileInode(p.getFileName())
+		"""Adds the data blocks to the file inode"""
 
-		print(inodeInfo)
-		# Fill code to add blocks to file inode
+		db.AddBlockToInode(p.getFileName(), p.getDataBlocksAfterRecv())
 
 	
 	def handle(self):
@@ -120,43 +95,33 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 		db = mds_db("dfs.db")
 		db.Connect()
 
-		# Define a packet object to decode packet messages
+		#packet object to decode packet messages
 		p = Packet()
-		# Receive a msg from the list, data-node, or copy clients
 		msg = self.request.recv(1024).decode()
-		
-		# Decode the packet received
 		p.DecodePacket(msg)
 
 		# Extract the command part of the received packet
 		cmd = p.getCommand()
-		print("Lol: ",cmd)
+  
 		# Invoke the proper action 
 		if   cmd == "reg":
 			# Registration client
-			print("Registering Address %s and Port %s" % (p.getAddr(), p.getPort()))
 			self.handle_reg(db, p)
-			#self.handle_reg(p)
 
 		elif cmd == "list":
-			# Client asking for a list of files
-			print("sending File names to ls...")
+			# ls client asking for a list of files
 			self.handle_list(db)
 		
 		elif cmd == "put":
-			# Client asking for servers to put data
-			print("Asking to Insert File in dfs")
-			# Fill code
+			# copy client asking for servers to put data
 			self.handle_put(db, p)
 		
 		elif cmd == "get":
-			# Client asking for servers to get data
-			print("Asking to Read Data Blocks")
+			# copy client asking for servers to get data
 			self.handle_get(db, p)
 
 		elif cmd == "dblks":
-			# Client sending data blocks for file
-			print("sending Data Blocks")
+			# copy client sending data blocks for file
 			self.handle_blocks(db, p)
 
 
@@ -164,14 +129,16 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 
 if __name__ == "__main__":
     HOST, PORT = "", 8000
+	#Checking for correct arguments
     if(len(sys.argv) > 1):
         try:
             PORT = int(sys.argv[1])
         except:
             usage()
-            
+    
+    #Initiate metadata server
     server = socketserver.TCPServer((HOST, PORT), MetadataTCPHandler)
-    print(f"Metadata being submissive on {HOST}:{PORT}")
-    # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
+    print(f"Metadata running {HOST}:{PORT}")
+
+    # Program interrupted (Ctrl-C)
     server.serve_forever()

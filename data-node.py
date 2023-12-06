@@ -24,95 +24,136 @@ def register(meta_ip, meta_port, data_ip, data_port):
 	"""Creates a connection with the metadata server and
 	   register as data node
 	"""
-	# Establish connection
-	# Fill code	
-	# Create a socket
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+ 
 	# Connect to the server
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	if meta_ip == 'localhost':
 		sock.connect((meta_ip, meta_port))
-		print("Data node connecting to meta-data server: %s %s" % (meta_ip, meta_port))
 	else:
 		sock.connect((int(meta_ip), int(meta_port)))
-		print("Data node connecting to meta-data server: %s %s" % (meta_ip, meta_port))
 
 	try:
 		response = "NAK"
 		sp = Packet()
 		while response == "NAK":
+      
+			# Send registration request to metadata server
 			sp.BuildRegPacket(data_ip, data_port)
-			print(sp.getCommand())
 			sock.sendall(sp.getEncodedPacket().encode())
-			print("Sent Adress %s and Port %s" % (sp.getAddr(), sp.getPort()))
-			response = sock.recv(1024).decode()
-			print(response)
-			if response == "ACK":
-				print("Huzaaaah")
-			if response == "DUP":
-				print("Duplicate Registration")
-			if response == "NAK":
-				print("Registratation ERROR")
 
+			# Recieves answer from metadata server
+			response = sock.recv(1024).decode()
+			if response == "ACK":
+				
+				# registrated for the first time in metadata server
+				print("registered datanode in metadata server")
+				print("Connected to metadata server %s:%s" % (sp.getAddr(), sp.getPort()))
+			if response == "DUP":
+       
+				# re-connected to metadata server
+				print("Connected to metadata server %s:%s" % (sp.getAddr(), sp.getPort()))
+			if response == "NAK":
+       
+				# could not connect to metadata server
+				print("Registratation Error")
+
+	# After metadata response, end of registration process
 	finally:
-		print("Sock closed")
 		sock.close()
 
-
+DATA_PATH = sys.argv[3]
 class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 
 	def handle_put(self, p):
-
 		"""Receives a block of data from a copy client, and 
 		   saves it with an unique ID.  The ID is sent back to the
 		   copy client.
 		"""
-		print("Putin")
-		print(p.getFileChunk())
+  
+		# Directory were blocks will be stored
+		DATA_PATH = sys.argv[3]
+		if(DATA_PATH == "."):
+			DATA_PATH = ""
+		elif(DATA_PATH[len(DATA_PATH)-1] != '/' ):
+			DATA_PATH += '/'
 
-		# Generates an unique block id.
+		# Lets copy client know that metadata is ready to recieve memory chunk
+		self.request.sendall("OK".encode())
+  
+		# Recieves chunk from copy utilizing the chunk size
+		chunk = self.request.recv(p.getFileChunk())
+		
+		# Generates an unique block id to know were chunk will be stored
 		blockid = str(uuid.uuid1())
-
-		# Open the file for the new data block.  
   
-  
-		# Receive the data block
-		print(p.getFileChunk())
-  
-		# Send the block id back
+		# Generates file were memory chunk will be stored
+		with open(DATA_PATH + blockid, 'wb') as destinationFile:
+			destinationFile.write(chunk)
+		
+		# Sending block id to copy client to store
 		sendBlockID = Packet()
 		sendBlockID.BuildGetDataBlockPacket(blockid)
 		self.request.sendall(sendBlockID.getEncodedPacket().encode())
-
-	def handle_get(self, p):
 		
+	def handle_get(self, p):
+		"""Retrieves block from respective blockid for copy client"""		
+  
+		# Directory were blocks should be stored
+		DATA_PATH = sys.argv[3]
+		if(DATA_PATH == "."):
+			DATA_PATH = ""
+		elif(DATA_PATH[len(DATA_PATH)-1] != '/' ):
+			DATA_PATH += '/'
+   
 		# Get the block id from the packet
 		blockid = p.getBlockID()
-		print(blockid)
+		
+		# Checks if memory block in dfs
+		if os.path.isfile(DATA_PATH + blockid):
+      
+			#Aquires size of chunk
+			fileStat = os.stat(DATA_PATH + blockid)
+			blockSize = fileStat.st_size
+   
+			#Access chunk of memory in file
+			blockFile = open(DATA_PATH + blockid, 'rb')
+			chunk = blockFile.read(blockSize)
 
-		p.BuildPutFileChunk("Hello It's a me, Mario")
-		self.request.sendall(p.getEncodedPacket().encode())
+			#Lets copy client know that the datanode is ready to send chunk
+			self.request.sendall("OK".encode())
+   
+			#Checks if copy client is ready to recieve data chunk
+			result = self.request.recv(1024).decode()
+			if(result == "READY"):
+				self.request.sendall(chunk)
+   
+		else:
+			self.request.sendall("NAK".encode())
   
-		
-		# Read the file with the block id data
-		# Send it back to the copy client.
-		
-		# Fill code
 
 	def handle(self):
+		"""recieves packet from copy client and invoke the proper action from it"""
+  
+		#recieves new command package
 		msg = self.request.recv(1024).decode()
 		p = Packet()
 		p.DecodePacket(msg)
 
-		cmd = p.getCommand()
+		cmd = p.getCommand() # Command from packet
+  
+		# Invoke the proper action 
 		if cmd == "put":
+			# Register new data blocks
 			self.handle_put(p)
 
 		elif cmd == "get":
+			# Get data blocks
 			self.handle_get(p)
 		
 
 if __name__ == "__main__":
 
+	#Validation of arguments
 	META_PORT = 8000
 	if len(sys.argv) < 4:
 		usage()
@@ -131,10 +172,11 @@ if __name__ == "__main__":
 	except:
 		usage()
 
-
+	# Initiate Registration Process
 	register("localhost", META_PORT, HOST, PORT)
+ 
+	# Initiate datanode server
 	server = socketserver.TCPServer((HOST, PORT), DataNodeTCPHandler)
 
-    # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
+    # Program interrupted (Ctrl-C)
 	server.serve_forever()
