@@ -34,19 +34,19 @@ def copyToDFS(address, fname, path):
 	else:
 		sockMeta.connect((int(metaIp), int(metaPort)))
 	
-	# Makes sure source file exists
+	# Checks if source file exists
 	if os.path.isfile(path):
      
-		#Aquires attributes from source file
+		# Aquires attributes from source file
 		fileStat = os.stat(path)
 		size = fileStat.st_size
   
-		# Create a Put packet with the fname and the length of the data
+		# Create a Put packet to send to the metadata server
 		fileInfo = Packet()
 		fileInfo.BuildPutPacket(fname, size)
 		sockMeta.sendall(fileInfo.getEncodedPacket().encode())
 
-		# Recieve list of data-nodes info from meta-data server
+		# Recieve list of data-nodes info from metadata server
 		response = sockMeta.recv(1024).decode()
 		sockMeta.close()
 
@@ -59,64 +59,59 @@ def copyToDFS(address, fname, path):
 			nodeList = Packet()
 			nodeList.DecodePacket(response)
 
-			#Sending part of file to each data-node and recieving a unique id where the piece of the file is stored.
-			blockList = [] #Will store the block information of each chunk of the file
-			chunkSize = size//len(nodeList.getDataNodes())
-			sourceFile = open(path, 'rb')
-			nodeCount = 0 #Tracks amount of dataNodes that recieved the chunk
-			print("Supposed file size: ", size)
-			print("Amount of nodes: ", len(nodeList.getDataNodes()))
+			# Storing file memory in dfs process 
+			blockList = [] # Stores the block information of each chunk of the file
+			chunkSize = size//len(nodeList.getDataNodes()) # Fraction of file memory each datanode will recieve
+			sourceFile = open(path, 'rb') # File that will be copied in dfs
+			nodeCount = 0 # Tracks amount of dataNodes that recieved the chunk
 			for address, port in nodeList.getDataNodes():
-				#try:
-				#Getting the current chunk and the chunk size from the list
-				# Takes consideration the remaining bits in the last chunk
-				print(nodeCount, len(nodeList.getDataNodes())-1)
-				if(nodeCount < len(nodeList.getDataNodes())-1):
-					size -= chunkSize
-					print("Current file size state: ", size)
-				else:
-					chunkSize = size
-    
-				print("Data-node %s chunk size: %s" % (port, chunkSize))
-	
-				#Connecting to current data-node
-				sockNode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				if address == 'localhost':
-					sockNode.connect((address, port))
-				else:
-					sockNode.connect((int(address), int(port)))
+				try:
 
-				#Sending get packet with chunk size to inode
-				fileChunk = Packet()
-				fileChunk.BuildPutFileChunk(chunkSize)
-				sockNode.sendall(fileChunk.getEncodedPacket().encode())
-	
-				#Recieving signal that data-node is ready to recieve chunk and sending it
-				response = sockNode.recv(1024).decode()
-				if(response == "OK"):
-					count = 0
-					while(count < chunkSize):
-						chunk = sourceFile.read(min(4096, chunkSize - count))
-						if not chunk:
-							break
-						sockNode.send(chunk)
-						count += len(chunk)
-					chunkSize = count
-					print("Chunks Passed: ", count)
-				
-				#Recieving uuid where data-node stored the file memory chunk
-				response = sockNode.recv(1024).decode()
-				chunkID = Packet()
-				chunkID.DecodePacket(response)
-				
-				#Storing block info
-				blockList.append((address, port, chunkID.getBlockID()))
+					# Takes consideration the remaining bits in the last chunk
+					if(nodeCount < len(nodeList.getDataNodes())-1):
+						size -= chunkSize
+					else:
+						chunkSize = size
+		
+					# Connecting to current data-node
+					sockNode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					if address == 'localhost':
+						sockNode.connect((address, port))
+					else:
+						sockNode.connect((int(address), int(port)))
 
-				#End of connection between data-node and client
-				nodeCount += 1
-				sockNode.close()
-				# except:
-				# 	print("Error: Sending Memory Process Failed")
+					# Sending get packet with chunk size to inode
+					fileChunk = Packet()
+					fileChunk.BuildPutBlockSize(chunkSize)
+					sockNode.sendall(fileChunk.getEncodedPacket().encode())
+		
+					# Recieving signal that datanode is ready to recieve chunk
+					response = sockNode.recv(1024).decode()
+					if(response == "OK"):
+						
+						# Sending chunks to datanode between pieces to avoid missing data
+						count = 0
+						while(count < chunkSize):
+							chunk = sourceFile.read(min(4096, chunkSize - count))
+							if not chunk:
+								break
+							sockNode.send(chunk)
+							count += len(chunk)
+						chunkSize = count
+					
+					# Recieving block id where datanode stored the file memory chunk
+					response = sockNode.recv(1024).decode()
+					blockid = Packet()
+					blockid.DecodePacket(response)
+					
+					# Storing block info
+					blockList.append((address, port, blockid.getBlockID()))
+
+					# End of connection with current datanode
+					nodeCount += 1
+					sockNode.close()
+				except:
+					print("Error: Sending Memory Process Failed")
 	
 			# Reconnect with Meta-data server
 			sockMeta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,12 +120,12 @@ def copyToDFS(address, fname, path):
 			else:
 				sockMeta.connect((int(metaIp), int(metaPort)))
     
-			#Create the inode utilizing the block list and file name and send it to the meta-data server
+			# Send inode information, block list and file name, to the metadata server
 			inode = Packet()
 			inode.BuildDataBlockPacket(fname, blockList)
 			sockMeta.sendall(inode.getEncodedPacket().encode())
 
-			#End copy to dfs process 
+			# File successfully copied to dfs, end copy to dfs process 
 			sockMeta.close()
 	else:
 		print("File not Found")	
@@ -153,7 +148,7 @@ def copyFromDFS(address, fname, path):
 	inode.BuildGetPacket(fname)
 	sockMeta.sendall(inode.getEncodedPacket().encode())
 	
-	#Recieving Inode Information
+	# Recieving Inode Information
 	result = sockMeta.recv(1024).decode()
 	if(result == "NFOUND"):
 		print("File not found in file system")
@@ -163,63 +158,62 @@ def copyFromDFS(address, fname, path):
 		inode.DecodePacket(result)
 		blockList = inode.getDataBlocksAfterRecv() # Data Blocks
 		size = inode.getFileInfo()[1] # File Size
-		print("Supposed file size: ", size)
-		#Calling each of the datanodes to retrieve the chunks of memory using blockid
+		
+		# Retrieving file memory from dfs process
 		chunkSize = size // len(blockList) # Bit size of chunks sent by datanodes
-		destinationFile = open(path, 'wb')
-		nodeCount = 0 #Tracks amount of blocks recieved by datanodes
+		destinationFile = open(path, 'wb') # File where file memory will be reconstructed
+		nodeCount = 0 # Tracks amount of blocks recieved by datanodes
 		for nodeIp, nodePort, blockId in blockList:
-			
-			# Makes sure that all bits are sent and avoid consequenses of integer division
-			# Takes consideration the remaining bits in the last block
-			if(nodeCount < len(blockList)-1):
-				size -= chunkSize
-				print("Current file size state: ", size)
-			else:
-				chunkSize = size
-
-			# Connecting to current datanode
-			sockNode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			if nodeIp == 'localhost':
-				sockNode.connect((nodeIp, nodePort))
-			else:
-				sockNode.connect((int(nodeIp), int(nodePort)))
-    
-			#Send block id to datanode  
-			block = Packet()
-			block.BuildGetDataBlockPacket(blockId)
-			sockNode.sendall(block.getEncodedPacket().encode())
-
-			# Checks if datanode contains the memory chunk of file 
-			result = sockNode.recv(1024).decode()
-			if(result != "OK"):
-				print("Error: Memory not found in nfs data")
-				sockNode.close()
-				exit()
-			else:
+			try:
        
-				# Lets datanode know that its ready to recieve memory chunk
-				sockNode.sendall("READY".encode())
-    
-				#recieve file chunk and insert it in chunk list
-				count = 0
-				while(count < chunkSize):
-					chunk = sockNode.recv(4096)
-					if not chunk:
-						break
-					destinationFile.write(chunk)
-					count += len(chunk)
-   
-			#End of connection between current datanode and client
-			nodeCount += 1
-			sockNode.close()
-   
-		#generate new file were file will be reconstructed with the chunks of the datalist
-		# with open(path, 'wb') as destination_file:
-		# 	for chunk in chunks:
-		# 		destination_file.write(chunk)
+				# Takes consideration the remaining bits in the last block
+				if(nodeCount < len(blockList)-1):
+					size -= chunkSize
+				else:
+					chunkSize = size
 
-	#End copy to file system process
+				# Connecting to current datanode
+				sockNode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				if nodeIp == 'localhost':
+					sockNode.connect((nodeIp, nodePort))
+				else:
+					sockNode.connect((int(nodeIp), int(nodePort)))
+		
+				# Send block id to datanode  
+				block = Packet()
+				block.BuildGetDataBlockPacket(blockId)
+				sockNode.sendall(block.getEncodedPacket().encode())
+
+				# Checks if datanode contains the memory chunk of file 
+				result = sockNode.recv(1024).decode()
+				if(result != "OK"):
+					
+					# Send error message and terminate copy process
+					print("Error: Memory not found in nfs data")
+					sockNode.close()
+					exit()
+				else:
+		
+					# Lets datanode know that its ready to recieve memory chunk
+					sockNode.sendall("READY".encode())
+		
+					# Recieving chunk from datanode between pieces to avoid missing data
+					count = 0
+					while(count < chunkSize):
+						chunk = sockNode.recv(4096)
+						if not chunk:
+							break
+						destinationFile.write(chunk)
+						count += len(chunk)
+	
+				# End of connection with current datanode
+				nodeCount += 1
+				sockNode.close()
+    
+			except:
+				print("Error: reconstruction of file process failed")
+
+	# File successfully reconstructed, end copy to file system process
 	sockMeta.close()
 
 if __name__ == "__main__":

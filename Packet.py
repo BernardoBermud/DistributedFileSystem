@@ -132,12 +132,12 @@ class Packet:
    
    #Funciones Custom
 	
-	def BuildPutFileChunk(self, chunkSize):
+	def BuildPutBlockSize(self, chunkSize):
 		"""Builds the size of the chunk the data-node will recieve"""
 		self.BuildCommand("put")
 		self.packet["chunkSize"] = chunkSize
   
-	def getFileChunk(self):
+	def getBlockSize(self):
 		"""Returns chunk of memory of a file"""
 		return self.packet.get("chunkSize")
 

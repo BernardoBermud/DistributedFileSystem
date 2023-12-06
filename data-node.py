@@ -25,7 +25,7 @@ def register(meta_ip, meta_port, data_ip, data_port):
 	   register as data node
 	"""
  
-	# Connect to the server
+	# Connect to metadata
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	if meta_ip == 'localhost':
 		sock.connect((meta_ip, meta_port))
@@ -61,7 +61,6 @@ def register(meta_ip, meta_port, data_ip, data_port):
 	finally:
 		sock.close()
 
-DATA_PATH = sys.argv[3]
 class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 
 	def handle_put(self, p):
@@ -77,19 +76,19 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		elif(DATA_PATH[len(DATA_PATH)-1] != '/' ):
 			DATA_PATH += '/'
 
-		chunkSize = p.getFileChunk()
+		# Recieves filesize from copy client
+		chunkSize = p.getBlockSize()
+  
 		# Lets copy client know that metadata is ready to recieve memory chunk
 		self.request.sendall("OK".encode())
-  
-		# Recieves chunk from copy utilizing the chunk size
-		print("Chunk size recieved: %s" % (chunkSize))
-		#chunk = self.request.recv(p.getFileChunk())
 		
 		# Generates an unique block id to know were chunk will be stored
 		blockid = str(uuid.uuid1())
   
-		# Generates file were memory chunk will be stored
+		# Putting memory block process
 		with open(DATA_PATH + blockid, 'wb') as destinationFile:
+			
+			# Recieving chunk from copy client between pieces to avoid missing data
 			count = 0
 			while(count < chunkSize):
 				chunk = self.request.recv(min(4096, chunkSize - count))
@@ -98,8 +97,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 				destinationFile.write(chunk)
 				count += len(chunk)
 
-			print("Chunks Given: ", count)
-		# Sending block id to copy client to store
+		# Sending block id to copy client
 		sendBlockID = Packet()
 		sendBlockID.BuildGetDataBlockPacket(blockid)
 		self.request.sendall(sendBlockID.getEncodedPacket().encode())
@@ -120,20 +118,21 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		# Checks if memory block in dfs
 		if os.path.isfile(DATA_PATH + blockid):
       
-			#Aquires size of chunk
+			# Aquires size of chunk
 			fileStat = os.stat(DATA_PATH + blockid)
 			blockSize = fileStat.st_size
    
-			#Access chunk of memory in file
+			# Access block of memory in file
 			blockFile = open(DATA_PATH + blockid, 'rb')
-			#chunk = blockFile.read(blockSize)
 
-			#Lets copy client know that the datanode is ready to send chunk
+			# Lets copy client know that the datanode is ready to send block
 			self.request.sendall("OK".encode())
    
-			#Checks if copy client is ready to recieve data chunk
+			# Checks if copy client is ready to recieve memory block
 			result = self.request.recv(1024).decode()
 			if(result == "READY"):
+       
+				# Sending memory block in in pieces to avoid memory loss
 				count = 0
 				while(count < blockSize):
 					chunk = blockFile.read(4096)
@@ -165,7 +164,6 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		elif cmd == "get":
 			# Get data blocks
 			self.handle_get(p)
-		
 
 if __name__ == "__main__":
 

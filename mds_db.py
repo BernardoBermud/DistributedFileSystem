@@ -44,12 +44,9 @@ class mds_db:
           
 		query = """insert into dnode (address, port) values (?, ?)"""
 		try:
-			print("Hello")
 			self.c.execute(query, (address, port))
-			print(self.c.lastrowid)
 			return self.c.lastrowid 
 		except sqlite3.IntegrityError as e: 
-			print("Uh oh")
 			# print(type(e), dir(e), e)
 			if e.args[0].split()[-1].strip() == "unique":
 				return 0
