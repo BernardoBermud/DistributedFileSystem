@@ -47,11 +47,11 @@ def register(meta_ip, meta_port, data_ip, data_port):
 				
 				# registrated for the first time in metadata server
 				print("registered datanode in metadata server")
-				print("Connected to metadata server %s:%s" % (sp.getAddr(), sp.getPort()))
+				print("Connected to metadata server from %s:%s" % (sp.getAddr(), sp.getPort()))
 			if response == "DUP":
        
 				# re-connected to metadata server
-				print("Connected to metadata server %s:%s" % (sp.getAddr(), sp.getPort()))
+				print("Connected to metadata server from %s:%s" % (sp.getAddr(), sp.getPort()))
 			if response == "NAK":
        
 				# could not connect to metadata server
@@ -81,14 +81,21 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		self.request.sendall("OK".encode())
   
 		# Recieves chunk from copy utilizing the chunk size
-		chunk = self.request.recv(p.getFileChunk())
+
+		#chunk = self.request.recv(p.getFileChunk())
 		
 		# Generates an unique block id to know were chunk will be stored
 		blockid = str(uuid.uuid1())
   
 		# Generates file were memory chunk will be stored
 		with open(DATA_PATH + blockid, 'wb') as destinationFile:
-			destinationFile.write(chunk)
+			count = 0
+			while(count < p.getFileChunk()):
+				chunk = self.request.recv(4096)
+				if not chunk:
+					break
+				destinationFile.write(chunk)
+				count += len(chunk)
 		
 		# Sending block id to copy client to store
 		sendBlockID = Packet()
@@ -117,7 +124,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
    
 			#Access chunk of memory in file
 			blockFile = open(DATA_PATH + blockid, 'rb')
-			chunk = blockFile.read(blockSize)
+			#chunk = blockFile.read(blockSize)
 
 			#Lets copy client know that the datanode is ready to send chunk
 			self.request.sendall("OK".encode())
@@ -125,7 +132,14 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 			#Checks if copy client is ready to recieve data chunk
 			result = self.request.recv(1024).decode()
 			if(result == "READY"):
-				self.request.sendall(chunk)
+				count = 0
+				while(count < blockSize):
+					chunk = blockFile.read(4096)
+					if not chunk:
+						self.request.send()
+						break
+					self.request.send(chunk)
+					count += len(chunk)
    
 		else:
 			self.request.sendall("NAK".encode())
