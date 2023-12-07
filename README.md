@@ -1,9 +1,9 @@
-### Name:   Bernardo A. Bermúdez Noriega
-### Stu#:   801-19-6346
-### Clss:   CCOM4017
-### Proj:   Assignment 04: Distributed File systems
-### Date:   December 7, 2023
-### Verbal Colaborations: Sergio D. Rodriguez de Jesús.
+#### Name:   Bernardo A. Bermúdez Noriega
+#### Stu#:   801-19-6346
+#### Clss:   CCOM4017
+#### Proj:   Assignment 04: Distributed File systems
+#### Date:   December 7, 2023
+#### Verbal Colaborations: Sergio D. Rodriguez de Jesús.
 
 ## Note:  Implementation done using Python 3 (3.8.3)
 
