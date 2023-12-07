@@ -105,10 +105,10 @@ They provide the following key functions:
     client utilizing the block info (data IP, data port, bock id). ("get")
 
 Data servers run on assigned ports and listen for block read/write requests. 
-The request commands are "get", "put". Based on the command sent by copy client, it chooses the process 
-that needs to do. The process of recieving and transfering of memory blocks between data node and client 
+The request commands are "get", "put". Based on the command sent by copy client, it chooses between 
+send and recieve. The process of recieving and sending memory blocks between data node and client,  
 is done sending them in chunks of 4KB at a time in order to avoid loosing bits. In this implementation, 
-they store the blocks of data as files within the users file system in the directory they've chosen 
+the blocks of data are stored as files within the users file system in the directory they've chosen 
 (`<path>`). Multiple data servers can run per machine on different ports. 
 
 ## ls Client (ls.py)
@@ -127,10 +127,10 @@ Key functions:
 
 -   Write "put": Sends file name/size to metadata server, receives datanode list, divides file into 
     memory blocks by dividing the file size with the amount of datanodes recieved in the list. Send 
-    to the datanode the "put" request and the size of the block that will be sent and be ready to recieve 
-    the memory block by chunks. Sends a data block to each data node in the list. After datanode stored 
-    the block, it returns the unique ID that will be stored as the block info by the copy client. Sends
-    list of blocks to metadata to store in database.
+    to the datanode the "put" request and the size of the block that will be sent so it's ready to recieve 
+    the memory block. Sends a data block to each data node in the list. After datanode stored the 
+    block, it returns the unique ID that will be stored as the block info by the copy client. copy client
+    finishes by sending list of blocks to metadata to be stored in the database.
 
 -   Read "get": Requests file inode with data blocks from metadata server "get", it divides the file size by the amount 
     of datanodes to know the size of blocks that will be recieved. Retrieves blocks from data nodes 
