@@ -1,10 +1,9 @@
-Name:   Bernardo A. Bermúdez Noriega
-Stu#:   801-19-6346
-Clss:   CCOM4017
-Proj:   Assignment 04: Distributed File systems
-Date:   December 7, 2023
-
-Verbal Colaborations: Sergio D. Rodriguez de Jesús.
+### Name:   Bernardo A. Bermúdez Noriega
+### Stu#:   801-19-6346
+### Clss:   CCOM4017
+### Proj:   Assignment 04: Distributed File systems
+### Date:   December 7, 2023
+### Verbal Colaborations: Sergio D. Rodriguez de Jesús.
 
 ## Note:  Implementation done using Python 3 (3.8.3)
 
@@ -20,7 +19,7 @@ Verbal Colaborations: Sergio D. Rodriguez de Jesús.
 
     Input:  `python3 meta-data.py <port, default=8000>`
 
-    If port is specified, the metadata server will run on port 8000 by default
+    If port is not specified, the metadata server will run on port 8000 by default
 
 
 3.  Run the datanode server program using the following argument format:
