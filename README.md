@@ -92,7 +92,7 @@ The metadata server runs on a designated port and listens for requests from data
 This request commands are "get", "put", "reg", "list", "dblks". Based on the command sent by client, it chooses 
 the process that needs to do.
 
-## Data Server 
+## Data Server (data-node.py)
 
 Data servers store the actual file data blocks. 
 
@@ -111,14 +111,14 @@ is done sending them in chunks of 4KB at a time in order to avoid loosing bits. 
 they store the blocks of data as files within the users file system in the directory they've chosen 
 (`<path>`). Multiple data servers can run per machine on different ports. 
 
-## ls Client
+## ls Client (ls.py)
 
 The ls client lists all files stored in the DFS along with their attributes.
 
 It sends a request "list" to the metadata server, which returns the file list stored in the database. 
 The ls client then prints this list.
 
-## copy Client 
+## Copy Client (copy.py)
 
 The copy client copies files to and from the DFS. The client handles file transfer coordination 
 with both the metadata and data servers.
