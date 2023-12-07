@@ -31,11 +31,11 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
        
 				#Registering data-node to database
 				db.AddDataNode(p.getAddr(), p.getPort())
-				self.request.sendall("ACK".encode())
+				self.request.send("ACK".encode())
 			else:
-				self.request.sendall("DUP".encode())
+				self.request.send("DUP".encode())
 		except:
-			self.request.sendall("NAK".encode())
+			self.request.send("NAK".encode())
 
 	def handle_list(self, db):
 		"""Gets the file list from the database and send list to ls client"""
@@ -50,9 +50,9 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			# Sending file list to ls client
 			ls = Packet()
 			ls.BuildListResponse(fileList)
-			self.request.sendall(ls.getEncodedPacket().encode())
+			self.request.send(ls.getEncodedPacket().encode())
 		except:
-			self.request.sendall("NAK".encode())	
+			self.request.send("NAK".encode())	
 
 	def handle_put(self, db, p):
 		"""Inserts file into data base and returns list of data-nodes to copy client"""
@@ -66,9 +66,9 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			#Sending list of data-nodes to copy client
 			nodeList = Packet()
 			nodeList.BuildPutResponse(db.GetDataNodes())
-			self.request.sendall(nodeList.getEncodedPacket().encode())
+			self.request.send(nodeList.getEncodedPacket().encode())
 		else:
-			self.request.sendall("DUP".encode())
+			self.request.send("DUP".encode())
 
 	def handle_get(self, db, p):
 		"""Checks if file is in database and returns inode information"""
@@ -79,9 +79,9 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			#Return inode to copy client
 			inodeInfo = db.GetFileInode(p.getFileName())
 			p.BuildGetResponse(inodeInfo[1], inodeInfo[0])
-			self.request.sendall(p.getEncodedPacket().encode())
+			self.request.send(p.getEncodedPacket().encode())
 		else:
-			self.request.sendall("NFOUND".encode())
+			self.request.send("NFOUND".encode())
 
 	def handle_blocks(self, db, p):
 		"""Adds the data blocks to the file inode"""

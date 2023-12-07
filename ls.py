@@ -28,7 +28,7 @@ def client(ip, port):
 	#Send request to recieve file list from meta-data server
 	sp = Packet()
 	sp.BuildListPacket()
-	sock.sendall(sp.getEncodedPacket().encode())
+	sock.send(sp.getEncodedPacket().encode())
 
 	#Recieve the list of file names and attributes from meta-data server
 	result = Packet()

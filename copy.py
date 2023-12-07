@@ -44,7 +44,7 @@ def copyToDFS(address, fname, path):
 		# Create a Put packet to send to the metadata server
 		fileInfo = Packet()
 		fileInfo.BuildPutPacket(fname, size)
-		sockMeta.sendall(fileInfo.getEncodedPacket().encode())
+		sockMeta.send(fileInfo.getEncodedPacket().encode())
 
 		# Recieve list of data-nodes info from metadata server
 		response = sockMeta.recv(1024).decode()
@@ -81,7 +81,7 @@ def copyToDFS(address, fname, path):
 				# Sending get packet with chunk size to inode
 				fileChunk = Packet()
 				fileChunk.BuildPutBlockSize(chunkSize)
-				sockNode.sendall(fileChunk.getEncodedPacket().encode())
+				sockNode.send(fileChunk.getEncodedPacket().encode())
 	
 				# Recieving signal that datanode is ready to recieve chunk
 				response = sockNode.recv(1024).decode()
@@ -119,7 +119,7 @@ def copyToDFS(address, fname, path):
 			# Send inode information, block list and file name, to the metadata server
 			inode = Packet()
 			inode.BuildDataBlockPacket(fname, blockList)
-			sockMeta.sendall(inode.getEncodedPacket().encode())
+			sockMeta.send(inode.getEncodedPacket().encode())
 
 			# File successfully copied to dfs, end copy to dfs process 
 			sockMeta.close()
@@ -142,7 +142,7 @@ def copyFromDFS(address, fname, path):
  	# Sending request to recieve inode information of source file
 	inode = Packet()
 	inode.BuildGetPacket(fname)
-	sockMeta.sendall(inode.getEncodedPacket().encode())
+	sockMeta.send(inode.getEncodedPacket().encode())
 	
 	# Recieving Inode Information
 	result = sockMeta.recv(1024).decode()
@@ -177,7 +177,7 @@ def copyFromDFS(address, fname, path):
 			# Send block id to datanode  
 			block = Packet()
 			block.BuildGetDataBlockPacket(blockId)
-			sockNode.sendall(block.getEncodedPacket().encode())
+			sockNode.send(block.getEncodedPacket().encode())
 
 			# Checks if datanode contains the memory chunk of file 
 			result = sockNode.recv(1024).decode()
@@ -190,7 +190,7 @@ def copyFromDFS(address, fname, path):
 			else:
 	
 				# Lets datanode know that its ready to recieve memory chunk
-				sockNode.sendall("READY".encode())
+				sockNode.send("READY".encode())
 	
 				# Recieving chunk from datanode between pieces to avoid missing data
 				count = 0

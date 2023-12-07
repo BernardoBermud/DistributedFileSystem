@@ -39,7 +39,7 @@ def register(meta_ip, meta_port, data_ip, data_port):
       
 			# Send registration request to metadata server
 			sp.BuildRegPacket(data_ip, data_port)
-			sock.sendall(sp.getEncodedPacket().encode())
+			sock.send(sp.getEncodedPacket().encode())
 
 			# Recieves answer from metadata server
 			response = sock.recv(1024).decode()
@@ -80,7 +80,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		chunkSize = p.getBlockSize()
   
 		# Lets copy client know that metadata is ready to recieve memory chunk
-		self.request.sendall("OK".encode())
+		self.request.send("OK".encode())
 		
 		# Generates an unique block id to know were chunk will be stored
 		blockid = str(uuid.uuid1())
@@ -100,7 +100,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		# Sending block id to copy client
 		sendBlockID = Packet()
 		sendBlockID.BuildGetDataBlockPacket(blockid)
-		self.request.sendall(sendBlockID.getEncodedPacket().encode())
+		self.request.send(sendBlockID.getEncodedPacket().encode())
 		
 	def handle_get(self, p):
 		"""Retrieves block from respective blockid for copy client"""		
@@ -126,7 +126,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 			blockFile = open(DATA_PATH + blockid, 'rb')
 
 			# Lets copy client know that the datanode is ready to send block
-			self.request.sendall("OK".encode())
+			self.request.send("OK".encode())
    
 			# Checks if copy client is ready to recieve memory block
 			result = self.request.recv(1024).decode()
@@ -143,7 +143,7 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 					count += len(chunk)
    
 		else:
-			self.request.sendall("NAK".encode())
+			self.request.send("NAK".encode())
   
 
 	def handle(self):
