@@ -71,26 +71,26 @@ and from clients
 # Distributed File System Programs
 
 This distributed file system consists of a metadata server, data servers, an ls client, and a copy client.
+The servers and clients comunicate utilizing 
 
 ## Metadata Server (meta-data.py)
 
-The metadata server keeps track of all file metadata, including the file name, size, and location 
+The metadata server keeps track of all file information, including the file name, size, and location 
 of data blocks and stores that information in the data base.
 
 It provides the following key functions:
 
 -   Registers new data nodes as they come online ("reg")
 -   Stores files and attributes (name, size) in database when new files are added ("put")
--   Returns a list of files and their attributes when the ls client requests it ("list")
--   Returns a list of blocks containing datanode ip, datanode port and id where memory is stored when 
-    client requests to read a file ("get")
 -   Returns list of available data nodes when client requests to write a file ("put")
+-   Returns a list of files and their attributes when the ls client requests it ("list")
+-   Returns a list of blocks containing datanode ip, datanode port and id where memory is stored (block id)
+    when client requests to read a file ("get")
 -   Stores inode when client finishes writing a file ("dblks")
 
-The metadata server runs on a designated port and listens for requests from data nodes and clients. 
-This instructions and commands are usually transfered utilizing the packet library Packet.py 
-utilizing json. This commands are "get", "put", "reg", "list", "dblks". Based on the command sent by 
-client, it chooses the process that needs to do.
+The metadata server runs on a designated port and listens for requests from datanodes and clients. 
+This request commands are "get", "put", "reg", "list", "dblks". Based on the command sent by client, it chooses 
+the process that needs to do.
 
 ## Data Server 
 
@@ -98,17 +98,18 @@ Data servers store the actual file data blocks.
 
 They provide the following key functions:
 
--   Register themselves with the metadata server on startup.
+-   Register themselves with the metadata server on startup.("reg")
 -   Receive and store data blocks from clients, assigning a unique ID to each block and sending
-    it back to client.
+    it back to client.("put")
 -   Retrieve and return data blocks when requested by clients utilizing the unique ID sent by the
-    client utilizing the inode (data IP, data port, bock id).
+    client utilizing the block info (data IP, data port, bock id). ("get")
 
 Data servers run on assigned ports and listen for block read/write requests from clients utilizing 
-the packets library. The process of recieving and transfering of memory blocks between data node and client 
-is done sending them in chunks of 4KB at a time in order to avoid loosing bits. In this implementation, 
-they store the blocks of data as files within the users file system in the directory they've 
-chosen (<path>). Multiple data servers can run per machine on different ports. 
+the packets library. The request commands are "get", "put". Based on the command sent by copy client, 
+it chooses the process that needs to do. The process of recieving and transfering of memory blocks between 
+data node and client is done sending them in chunks of 4KB at a time in order to avoid loosing bits. 
+In this implementation, they store the blocks of data as files within the users file system in the 
+directory they've chosen (<path>). Multiple data servers can run per machine on different ports. 
 
 ## ls Client
 
@@ -126,11 +127,11 @@ Key functions:
 
 -   Write "put": Sends file name/size to metadata server, receives data node list, divides file into 
     memory blocks by dividing the file size with the amount of datanodes recieved in the list. Send 
-    to the datanode the put request and the size of the block that will be sent and be ready to recieve 
-    the memory lock by chunks. Sends a data block to each data node in the list. After datanode stored 
+    to the datanode the "put" request and the size of the block that will be sent and be ready to recieve 
+    the memory block by chunks. Sends a data block to each data node in the list. After datanode stored 
     the block, it returns the unique ID that will be stored as the block info by the copy client.
 
--   Read "get": Requests file inode with data blocks from metadata server, it divides the file size by the amount 
+-   Read "get": Requests file inode with data blocks from metadata server "get", it divides the file size by the amount 
     of datanodes to know the size of blocks that will be recieved. Retrieves blocks from data nodes 
     as it reassembles file as it retrieves the blocks from data nodes.
 
