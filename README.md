@@ -80,17 +80,17 @@ of data blocks and stores that information in the data base.
 
 It provides the following key functions:
 
--   Registers new data nodes as they come online ("reg")
--   Stores files and attributes (name, size) in database when new files are added ("put")
--   Returns list of available data nodes when client requests to write a file ("put")
--   Returns a list of files and their attributes when the ls client requests it ("list")
+-   Registers new data nodes as they come online
+-   Stores files and attributes (name, size) when new files are added
+-   Returns list of available data nodes when client requests to write a file
+-   Returns a list of files and their attributes when the ls client requests it
 -   Returns a list of blocks containing datanode ip, datanode port and id where memory is stored (block id)
-    when client requests to read a file ("get")
--   Stores inode when client finishes writing a file ("dblks")
+    when client requests to read a file
+-   Stores inode when client finishes writing a file
 
 The metadata server runs on a designated port and listens for requests from datanodes and clients. 
-This request commands are "get", "put", "reg", "list", "dblks". Based on the command sent by client, it chooses 
-the process that needs to do.
+This request commands are "get", "put", "reg", "list", "dblks". Based on the command sent by client, it chooses the process that needs to do. Uses functions from mds_db.py to retrieve and store information
+in database. 
 
 ## Data Server (data-node.py)
 
@@ -98,11 +98,11 @@ Data servers store the actual file data blocks.
 
 They provide the following key functions:
 
--   Register themselves with the metadata server on startup.("reg")
+-   Register themselves with the metadata server on startup.
 -   Receive and store data blocks from clients, assigning a unique ID to each block and sending
-    it back to client.("put")
+    it back to client.
 -   Retrieve and return data blocks when requested by clients utilizing the unique ID sent by the
-    client utilizing the block info (data IP, data port, bock id). ("get")
+    client utilizing the block info (data IP, data port, bock id).
 
 Data servers run on assigned ports and listen for block read/write requests. 
 The request commands are "get", "put". Based on the command sent by copy client, it chooses between 
@@ -115,7 +115,7 @@ the blocks of data are stored as files within the users file system in the direc
 
 The ls client lists all files stored in the DFS along with their attributes.
 
-It sends a request "list" to the metadata server, which returns the file list stored in the database. 
+It sends a request "list" to the metadata server, which returns the file list. 
 The ls client then prints this list.
 
 ## Copy Client (copy.py)
@@ -125,14 +125,14 @@ with both the metadata and data servers.
 
 Key functions:
 
--   Write "put": Sends file name/size to metadata server, receives datanode list, divides file into 
+-   Write: Sends file name/size to metadata server, receives datanode list, divides file into 
     memory blocks by dividing the file size with the amount of datanodes recieved in the list. Send 
-    to the datanode the "put" request and the size of the block that will be sent so it's ready to recieve 
+    to the datanode the request and the size of the block that will be sent so it's ready to recieve 
     the memory block. Sends a data block to each data node in the list. After datanode stored the 
     block, it returns the unique ID that will be stored as the block info by the copy client. copy client
-    finishes by sending list of blocks to metadata to be stored in the database.
+    finishes by sending list of blocks for metadata to store.
 
--   Read "get": Requests file inode with data blocks from metadata server "get", it divides the file size by the amount 
+-   Read: Requests file inode with data blocks from metadata server, it divides the file size by the amount 
     of datanodes to know the size of blocks that will be recieved. Retrieves blocks from data nodes 
     as it reassembles file as it retrieves the blocks from data nodes.
 
