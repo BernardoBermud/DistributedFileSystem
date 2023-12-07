@@ -54,18 +54,17 @@ def copyToDFS(address, fname, path):
 		if(response == "DUP"):
 			print("Name already in use in file system")
 		else:
-      
-			# Recieve list of data-node info from meta-data server
-			nodeList = Packet()
-			nodeList.DecodePacket(response)
+			try:
+				# Recieve list of data-node info from meta-data server
+				nodeList = Packet()
+				nodeList.DecodePacket(response)
 
-			# Storing file memory in dfs process 
-			blockList = [] # Stores the block information of each chunk of the file
-			chunkSize = size//len(nodeList.getDataNodes()) # Fraction of file memory each datanode will recieve
-			sourceFile = open(path, 'rb') # File that will be copied in dfs
-			nodeCount = 0 # Tracks amount of dataNodes that recieved the chunk
-			for address, port in nodeList.getDataNodes():
-				try:
+				# Storing file memory in dfs process 
+				blockList = [] # Stores the block information of each chunk of the file
+				chunkSize = size//len(nodeList.getDataNodes()) # Fraction of file memory each datanode will recieve
+				sourceFile = open(path, 'rb') # File that will be copied in dfs
+				nodeCount = 0 # Tracks amount of dataNodes that recieved the chunk
+				for address, port in nodeList.getDataNodes():
 
 					# Takes consideration the remaining bits in the last chunk
 					if(nodeCount < len(nodeList.getDataNodes())-1):
@@ -110,8 +109,8 @@ def copyToDFS(address, fname, path):
 					# End of connection with current datanode
 					nodeCount += 1
 					sockNode.close()
-				except:
-					print("Error: Sending Memory Process Failed")
+			except:
+				print("Error: Sending Memory Process Failed")
 	
 			# Reconnect with Meta-data server
 			sockMeta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,19 +152,19 @@ def copyFromDFS(address, fname, path):
 	if(result == "NFOUND"):
 		print("File not found in file system")
 	else:
-     
-		# If there is no error response, retreive file data blocks and attributes
-		inode.DecodePacket(result)
-		blockList = inode.getDataBlocksAfterRecv() # Data Blocks
-		size = inode.getFileInfo()[1] # File Size
+		try:
+          
+			# If there is no error response, retreive file data blocks and attributes
+			inode.DecodePacket(result)
+			blockList = inode.getDataBlocksAfterRecv() # Data Blocks
+			size = inode.getFileInfo()[1] # File Size
+
+			# Retrieving file memory from dfs process
+			chunkSize = size // len(blockList) # Bit size of chunks sent by datanodes
+			destinationFile = open(path, 'wb') # File where file memory will be reconstructed
+			nodeCount = 0 # Tracks amount of blocks recieved by datanodes
+			for nodeIp, nodePort, blockId in blockList:
 		
-		# Retrieving file memory from dfs process
-		chunkSize = size // len(blockList) # Bit size of chunks sent by datanodes
-		destinationFile = open(path, 'wb') # File where file memory will be reconstructed
-		nodeCount = 0 # Tracks amount of blocks recieved by datanodes
-		for nodeIp, nodePort, blockId in blockList:
-			try:
-       
 				# Takes consideration the remaining bits in the last block
 				if(nodeCount < len(blockList)-1):
 					size -= chunkSize
@@ -209,9 +208,9 @@ def copyFromDFS(address, fname, path):
 				# End of connection with current datanode
 				nodeCount += 1
 				sockNode.close()
-    
-			except:
-				print("Error: reconstruction of file process failed")
+	
+		except:
+			print("Error: reconstruction of file process failed")
 
 	# File successfully reconstructed, end copy to file system process
 	sockMeta.close()
