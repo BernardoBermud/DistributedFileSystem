@@ -6,6 +6,8 @@ Date:   December 7, 2023
 
 Verbal Colaborations: Sergio D. Rodriguez de Jesús.
 
+## Note:  Implementation done using Python 3.8.3
+
 # Instructions 
 
 ## Setting Up the Distributed File system
