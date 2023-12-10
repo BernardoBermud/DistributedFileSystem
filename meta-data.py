@@ -87,7 +87,7 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 		"""Adds the data blocks to the file inode"""
 
 		# Storing inode information in metadata server
-		db.AddBlockToInode(p.getFileName(), p.getDataBlocksAfterRecv())
+		db.AddBlockToInode(p.getFileName(), p.getDataBlocks())
 
 	
 	def handle(self):

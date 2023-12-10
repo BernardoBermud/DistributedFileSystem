@@ -152,7 +152,7 @@ def copyFromDFS(address, fname, path):
 
 		# If there is no error response, retreive file data blocks and attributes
 		inode.DecodePacket(result)
-		blockList = inode.getDataBlocksAfterRecv() # Data Blocks
+		blockList = inode.getDataBlocks() # Data Blocks
 		size = inode.getFileInfo()[1] # File Size
 
 		# Retrieving file memory from dfs process

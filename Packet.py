@@ -125,11 +125,6 @@ class Packet:
 		"""Returns chunk of memory of a file"""
 		return self.packet.get("chunkSize")
 
-	def getDataBlocksAfterRecv(self):
-		"""Returns a list of data blocks in touple form""" 
-		blockList = [tuple(sublist) for sublist in self.packet.get("blocks")]
-		return blockList
-
 		
 	
 		
