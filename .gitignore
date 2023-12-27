@@ -1,7 +1,7 @@
 data/
 playground/
 test1.py
-lol.txt
+*.txt
 dfs.db
 *.png
 *.mp4
