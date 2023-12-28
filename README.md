@@ -1,11 +1,27 @@
-#### Name:   Bernardo A. Bermúdez Noriega
-#### Stu#:   801-19-6346
-#### Clss:   CCOM4017
-#### Proj:   Assignment 04: Distributed File systems
-#### Date:   December 7, 2023
-#### Verbal Colaborations: Sergio D. Rodriguez de Jesús and Yadriel O. Camis Bonilla
+This is an implementation of a simple, yet functional, distributed file system that can work locally 
+as well as through a network of different computers. For the moment, this may contain an unreliable and 
+insecure file server, hopefully someday the developer decides to pick this proyect up again to apply 
+better security measures... 
 
-## Note:  Implementation done using Python 3 (3.8.3)
+This readme will be able to give you instructions on how to make it work and use it, as well as teach 
+you how each part works.
+
+#### Note:  Implementation done using Python 3 (3.8.3)
+
+## Table of Contents
+[Instructions](#instructions)
+    [Set Up dfs](#setting-up-the-distributed-file-system)
+    [Set Up copy Client](#copy-client)
+    [Set Up ls Client](#ls-client)
+    [Set Up rm Client](#copy-client)
+
+[Program Logic](#distributed-file-system-programs-how-they-work)
+    [Metadata Server Logic](#metadata-server-meta-datapy)
+    [Data Server Logic](#data-server-data-nodepy)
+    [ls Client logic](#ls-client-lspy)
+    [copy Client logic](#copy-client-copypy)
+    [rm Client logic](#rm-client-rmpy)
+
 
 # Instructions 
 
@@ -36,8 +52,10 @@
     same data path, otherwise this may cause issues when retrieving files in the dfs.
 
 Given these conditions, the distributed file system should be ready to recieve and send commands to
-and from clients. If you want to delete the files in the dfs, you must remove "dfs.db" and repeat
-step 1, keep in mind that you still need to remove manually the files were data blocks are stored.
+and from clients. While using the dfs, do not delete the files were data blocks are stored manually since it can cause 
+problems trying to copy items from the dfs to your file system. If you want to reset the entire file system, 
+you must remove "dfs.db" and repeat step 1, keep in mind that you still need to remove manually the files were 
+data blocks are stored. 
 
 
 ## Copy client
@@ -52,10 +70,7 @@ step 1, keep in mind that you still need to remove manually the files were data 
 
 2.  To copy a file from the distributed file system, use the following argument format.
 
-    Input:  `python3 copy.py <server>:<port>:<dfs file path> <destination file>`
-
-    Server is the IP address were the metadata server is running, and port is it's port.
-    The dfs file path is the name of the file in the dfs that you want to copy and the destination
+    Input:  `python3 copy.py <server>:<# Abstracte file in the dfs that you want to copy and the destination
     file is where it will be copied to.
 
 Disclaimer: Naming files in dfs using the ':' character will not work due to argument format.
@@ -66,16 +81,25 @@ Disclaimer: Naming files in dfs using the ':' character will not work due to arg
 
     Input: `python3 ls.py <server>:<port, default=8000>`
 
-    server is the metadata server address and metadata port is the optional metadata 
+    Server is the metadata server address and metadata port is the optional metadata 
     port if it was run in a different port other than the default port. The list should display the 
     file name along side it's attributes, in this case the size of the file.
 
+## rm client
 
-# Distributed File System Programs
+1.  To delete a file from the distributed file system, use the following argument format:
 
-This distributed file system consists of a metadata server, data servers, an ls client, and a copy client.
-The servers and clients send and recieve commands and information from the packets library utilizing the socket
-library for communication.
+    Input: `python3 rm.py <server>:<port>:<dfs file path>`
+
+    Server is the ip where the metadata server is running, and port it's the port that the metadata
+    server is using. The data blocks that belonged to that file should be deleted as well as the file 
+    not appearing anymore when you run the ls client.
+
+# Distributed File System Programs (How They Work)
+
+This distributed file system consists of  a metadata server, data servers, an ls client, and a copy client.
+The servers and clients send and recieve commands and information from the packets library (Packet.py)
+utilizing the socket library for communication.
 
 ## Metadata Server (meta-data.py)
 
@@ -93,8 +117,7 @@ It provides the following key functions:
 -   Stores inode when client finishes writing a file.
 
 The metadata server runs on a designated port and listens for requests from datanodes and clients. 
-This request commands are "get", "put", "reg", "list", "dblks". Based on the command sent by client, it chooses the process that needs to do. Uses functions from mds_db.py to retrieve and store information
-in database. 
+This request commands are "get", "put", "reg", "list", "dblks". Based on the command sent by client, it chooses the process that needs to do. Uses functions from mds_db.py to retrieve and store information in database. 
 
 ## Data Server (data-node.py)
 
@@ -142,3 +165,11 @@ Key functions:
 
 The process of recieving and transfering of memory blocks between data node and copy client is done 
 sending them in chunks of 4KB at a time in order to avoid loosing bits.
+
+## rm client (rm.py)
+
+The rm client makes sure that all the information of the file stored in the dfs is deleted. The client handles
+file deletion communicating with the metadata server and data nodes that stored originally the datablocks.
+
+It sends a request to the metadata server to recieve the inode information. With this information, it's able to send
+each datanode server the respective blockid they are in charge of and delete the file were the block was being stored.

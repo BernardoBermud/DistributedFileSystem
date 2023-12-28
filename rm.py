@@ -11,7 +11,6 @@
 
 import socket
 import sys
-import os.path
 
 from Packet import *
 
@@ -43,13 +42,11 @@ def rmFromDFS(address, fname):
 		print("File not found in file system")
 		
 	else:
-		print("mulch gang 4 life")
 		
         # If there is no error response, retreive file data blocks and attributes
 		inode.DecodePacket(result)
 		blockList = inode.getDataBlocks() # Data Blocks
 		size = inode.getFileInfo()[1] # File Size
-		print(size, blockList)
 
 		# Deleting data blocks of file process
 		nodeCount = 0 # Tracks amount of blocks recieved by datanodes
@@ -87,11 +84,9 @@ if __name__ == "__main__":
 		ip = file_from[0]
 		port = int(file_from[1])
 		from_path = file_from[2]
-		print((ip, port), from_path)
 		rmFromDFS((ip, port), from_path)
 
 	else:
-		print("Error: incorrect format")
 		usage()
 
 		
