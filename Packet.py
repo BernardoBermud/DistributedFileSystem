@@ -14,7 +14,7 @@ class Packet:
 
 	def __init__(self):
 	
-		self.commands = ["reg", "list", "put", "get", "dblks"]
+		self.commands = ["reg", "list", "put", "get", "dblks", "rm"]
 		self.packet = {}
 	
 	def getEncodedPacket(self):
@@ -59,7 +59,7 @@ class Packet:
 
 	def BuildGetPacket(self, fname):
 		"""Build a get packet to get fname."""
-		self.BuildCommand("get")
+		self.BuildCommand("get")	# Takes consideration the remaining bits in the last block
 		self.packet["fname"] = fname
 
 	def BuildPutPacket(self, fname, fsize):
@@ -124,6 +124,18 @@ class Packet:
 	def getBlockSize(self):
 		"""Returns chunk of memory of a file"""
 		return self.packet.get("chunkSize")
+	
+	def BuildRmPacket(self, fname):
+		"""Build a remove packet to get attributes and remove from database"""
+		self.BuildCommand("rm")
+		self.packet["fname"] = fname
+
+	def BuildRmDataBlockPacket(self, blockid):
+		"""Builds a get data block packet. Usefull when requesting a data block to a data node."""
+		self.BuildCommand("rm")
+		self.packet["blockid"] = blockid
+
+	
 
 		
 	

@@ -1,0 +1,3 @@
+Data nodes amount 3:
+
+Usual Ports: 6969 6868 6767

@@ -89,6 +89,26 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 		# Storing inode information in metadata server
 		db.AddBlockToInode(p.getFileName(), p.getDataBlocks())
 
+	def handle_rm(self, db, p):
+		"""
+		Checks if file is in database, returns inode information to client and 
+		deletes file record in database
+		"""
+		
+		# Cheking if file exists
+		if db.GetFileInfo(p.getFileName())[0] != None:
+			print("File found")
+			# Return inode to rm client
+			inodeInfo = db.GetFileInode(p.getFileName())
+			p.BuildGetResponse(inodeInfo[1], inodeInfo[0])
+			self.request.send(p.getEncodedPacket().encode())
+
+			# Deleting file from database
+			db.DeleteFile(p.getFileName())
+
+		else:
+			print("File NOT found")
+			self.request.send("NFOUND".encode())
 	
 	def handle(self):
 
@@ -104,6 +124,9 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 		# Extract the command part of the received packet
 		cmd = p.getCommand()
   
+		print(cmd)
+		print(p.getFileName())
+
 		# Invoke the proper action 
 		if   cmd == "reg":
 			# Registration client
@@ -125,6 +148,9 @@ class MetadataTCPHandler(socketserver.BaseRequestHandler):
 			# copy client sending data blocks for file
 			self.handle_blocks(db, p)
 
+		elif cmd == "rm":
+			# rm client asking for removing a file
+			self.handle_rm(db, p)
 
 		db.Close()
 

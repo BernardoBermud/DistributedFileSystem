@@ -158,3 +158,14 @@ class mds_db:
 		query = """select address, port, cid from dnode, block where dnode.nid = block.nid and block.fid=?"""
 		self.c.execute(query, (fid,))
 		return fsize, self.c.fetchall()
+	
+	def DeleteFile(self, fname):
+		"""Deletes all the file and inode information from the database"""
+		fid, dummy1 = self.GetFileInfo(fname)
+		if not fid:
+			return None
+		inode_query = """delete from inode where fid=?"""
+		self.c.execute(inode_query, (fid,))
+		block_query = """delete from block where fid=?"""
+		self.c.execute(block_query, (fid,))
+		return 1

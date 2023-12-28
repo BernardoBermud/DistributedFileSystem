@@ -145,6 +145,25 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
 		else:
 			self.request.send("NAK".encode())
   
+	def handle_rm(self, p):
+		"""Deletes block from respective blockid for rm client"""		
+  
+		# Directory were blocks should be stored
+		DATA_PATH = sys.argv[3]
+		if(DATA_PATH == "."):
+			DATA_PATH = ""
+		elif(DATA_PATH[len(DATA_PATH)-1] != '/' ):
+			DATA_PATH += '/'
+   
+		# Get the block id from the packet
+		blockid = p.getBlockID()
+		
+		# Checks if memory block in dfs
+		if os.path.isfile(DATA_PATH + blockid):
+
+			# Deleting data block
+			os.remove(DATA_PATH + blockid)
+
 
 	def handle(self):
 		"""recieves packet from copy client and invoke the proper action from it"""
@@ -158,12 +177,16 @@ class DataNodeTCPHandler(socketserver.BaseRequestHandler):
   
 		# Invoke the proper action 
 		if cmd == "put":
-			# Register new data blocks
+			# Register new data block
 			self.handle_put(p)
 
 		elif cmd == "get":
-			# Get data blocks
+			# Get data block
 			self.handle_get(p)
+
+		elif cmd == "rm":
+			# Remove data block
+			self.handle_rm(p)
 
 if __name__ == "__main__":
 
