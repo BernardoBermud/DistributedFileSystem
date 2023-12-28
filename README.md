@@ -13,11 +13,11 @@ you how each part works.
 
 -   [Set Up dfs](#setting-up-the-distributed-file-system)
 
--   [Use copy Client](#copy-client)
+-   [Using copy Client](#copy-client)
 
--   [Use ls Client](#ls-client)
+-   [Using ls Client](#ls-client)
 
--   [Use rm Client](#copy-client)
+-   [Using rm Client](#copy-client)
 
 [Program Logic](#distributed-file-system-programs-how-they-work)
 
