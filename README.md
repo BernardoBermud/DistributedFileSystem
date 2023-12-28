@@ -10,16 +10,25 @@ you how each part works.
 
 ## Table of Contents
 [Instructions](#instructions)
+
     [Set Up dfs](#setting-up-the-distributed-file-system)
+
     [Set Up copy Client](#copy-client)
+
     [Set Up ls Client](#ls-client)
+
     [Set Up rm Client](#copy-client)
 
 [Program Logic](#distributed-file-system-programs-how-they-work)
+
     [Metadata Server Logic](#metadata-server-meta-datapy)
+
     [Data Server Logic](#data-server-data-nodepy)
+
     [ls Client logic](#ls-client-lspy)
+
     [copy Client logic](#copy-client-copypy)
+
     [rm Client logic](#rm-client-rmpy)
 
 
